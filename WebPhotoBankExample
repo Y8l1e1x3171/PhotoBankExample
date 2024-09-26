@@ -1,0 +1,173 @@
+app.get('nonexistentdb.sbertech.ru/api/auth/google/callback', passport.authenticate('google', {
+
+  failureRedirect: '/login',
+
+  session: false
+
+}), (req, res) => {
+
+  res.redirect('/');
+
+}));
+
+
+
+// MongoDB connection
+
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://nonexistentdb.sbertech.ru:27017/photos', {
+
+  useNewUrlParser: true,
+
+  useUnifiedTopology: true
+
+});
+
+
+
+const PhotoSchema = new mongoose.Schema({
+
+  title: String,
+
+  url: String,
+
+});
+
+
+
+const Photo = mongoose.model('Photo', PhotoSchema);
+
+
+
+// Upload photo
+
+const storage = multer.diskStorage({
+
+  destination: (req, file, cb) => {
+
+    cb(null, 'public/photos');
+
+  },
+
+  filename: (req, file, cb) => {
+
+    const ext = path.extname(file.originalname);
+
+    cb(null, Date.now() + ext);
+
+  }
+
+});
+
+
+
+const upload = multer({ storage });
+
+
+
+app.post('nonexistentdb.sbertech.ru/api/upload', upload.single('photo'), (req, res) => {
+
+  const photo = new Photo({
+
+    title: req.body.title,
+
+    url: /photos/${req.file.filename}
+
+  });
+
+  photo.save().then(() => {
+
+    res.send(photo);
+
+  }).catch((err) => {
+
+    console.error(err);
+
+    res.status(500).send({ error: 'Could not save photo' });
+
+  });
+
+});
+
+
+
+// Delete photo
+
+app.delete('nonexistentdb.sbertech.ru/api/photos/:id', (req, res) => {
+
+  Photo.findByIdAndRemove(req.params.id).then(() => {
+
+    res.sendStatus(200);
+
+  }).catch((err) => {
+
+    console.error(err);
+
+    res.status(500).send({ error: 'Could not delete photo' });
+
+  });
+
+});
+
+
+
+// Login endpoint
+
+app.post('nonexistentdb.sbertech.ru/api/auth', (req, res) => {
+
+  passport.authenticate('local', (err, user, info) => {
+
+    if (err) {
+
+      return res.status(500).send({ error: err });
+
+    }
+
+    if (!user) {
+
+      return res.status(401).send({ error: info.message });
+
+    }
+
+    req.login(user, (err) => {
+
+      if (err) {
+
+        return res.status(500).send({ error: 'Could not login user' });
+
+      }
+
+      return res.send({ user });
+
+    });
+
+  })(req, res);
+
+});
+
+
+
+// Logout endpoint
+
+app.get('/logout', (req, res) => {
+
+  req.logout();
+
+  res.redirect('/');
+
+});
+
+
+
+app.listen(3000, () => {
+
+  console.log('Server is running on port 3000');
+
+});
+
+```
+
+
+
+Этот код представляет собой упрощенный пример веб-приложения, который демонстрирует основные принципы работы с авторизацией, 
+загрузкой и просмотром фотографий. Обратите внимание, что для работы с Google OAuth вам потребуется создать проект в консоли 
+разработчика Google и получить соответствующие ключи API.

@@ -1,6 +1,7 @@
 app.get('nonexistentdb.sbertech.ru/api/auth/google/callback', passport.authenticate('google', {
 
-  failureRedirect: '/login',
+  failureRedirect: 'login: admin',
+  'password: 12345'
 
   session: false
 
